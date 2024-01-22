@@ -14,13 +14,17 @@ router.get('/balance', authMiddleware, async(req, res) => {
 })
 
 router.post('/transfer', authMiddleware ,async (req, res) => {
+  const session = await mongoose.startSession();
+
+  session.startTransaction();
   const { amount , to } = req.body;
 
   const account = await Account.findOne({
     userId : req.userId
-  })
+  }).session(session)
 
   if( account.balance < amount) {
+    await session.abortTransaction();
     res.status(400).json({
       message: "Insufficient balance"
     })
@@ -28,9 +32,10 @@ router.post('/transfer', authMiddleware ,async (req, res) => {
 
   const toAccount = await Account.findOne({
     userId : to
-  })
+  }).session(session);
 
   if(!toAccount){
+    await session.abortTransaction();
     res.status(400).json({
       message: "Invalid account"
     });
@@ -43,7 +48,7 @@ router.post('/transfer', authMiddleware ,async (req, res) => {
     $inc : {
       balance: -amount
     }
-  })
+  }).session(session)
 
   // increase the amount in the toAccount
   await Account.updateOne({
@@ -52,12 +57,13 @@ router.post('/transfer', authMiddleware ,async (req, res) => {
     $inc : {
       balance : amount
     }
-  })
+  }).session(session)
 
+  // commiting the transaction
+  await session.commitTransaction();
   res.json({
     message : "Transfer Successful"
   })
-
 })
 
 module.exports = router;

@@ -9,8 +9,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const signupSchema = zod.object({
   username: zod.string().email(),
   password: zod.string(),
-  firstname : String(),
-  lastname: String()
+  firstname : zod.string(),
+  lastname: zod.string()
 });
 
 router.post('/signup', async(req,res) => {
@@ -59,8 +59,8 @@ router.post('/signup', async(req,res) => {
 });
 
 const signinSchema = zod.object({
-  username: String().email(),
-  password: String()
+  username: zod.string().email(),
+  password: zod.string()
 })
 
 router.post('signin', async(req,res) => {
